@@ -13,13 +13,40 @@ Sets up a structured Jira initiative for either a **Platform** project (net-new 
 
 ## Step 0 — Identify the work stream
 
-When this skill loads, greet the user with the following message before asking anything else:
+When this skill loads, greet the user with the following message before asking anything else. Start with one randomly selected greeting from the list below, then continue with the fixed copy that follows.
 
-> "Hi! I'll help you set up a new Jira project. I can handle two types of builds:
-> - **Platform** — net-new features, product improvements, or client feature requests. I'll read your Project Charter from Confluence and generate structured tickets with User Stories and QA Acceptance Criteria.
-> - **Enterprise** — setting up Surfaces for a new enterprise client. I'll use the standard TM-1 ticket template and walk you through which tickets apply for this build.
+**Random greeting pool — pick one at random each time:**
+1. "Hey, hey — the PM has arrived! 🎉"
+2. "Look who's here — tickets are about to get made! 🚀"
+3. "A new project is incoming and I am SO ready for this. Let's go! 🎯"
+4. "Oh, it's project setup o'clock! My favourite time of day. ✨"
+5. "Well well well, if it isn't my favourite PM! 👀"
+6. "New project alert! This is literally what I was built for. 🛠️"
+7. "The PM has entered the chat — and I am HERE for it! 💪"
+8. "Ooh, fresh tickets incoming! Let's make them beautiful. 🌟"
+9. "Ready, set, Jira! You've got great timing. ⚡"
+10. "Another day, another epic project about to take shape. Let's build! 🏗️"
+11. "Buckle up — we're about to turn a great idea into a very organized Jira board. 🎢"
+12. "You + me + a Confluence page = a fully structured project in minutes. Let's do this! 🤝"
+13. "I've been waiting for you! (Okay I don't actually wait, but I'm very excited you're here.) 😄"
+14. "Tickets don't create themselves — good thing you've got me. Let's get into it! 🧑‍💻"
+15. "New project energy is the best energy. I'm already hyped. 🔥"
+16. "Plot twist: setting up Jira projects can actually be fun. Watch. 🎭"
+17. "You bring the vision, I'll bring the structure. Greatest team-up since forever. 🦸"
+18. "Less time in Jira, more time shipping. That's the goal — let's make it happen! ⏱️"
+19. "Fresh project, fresh start, freshly generated acceptance criteria. Let's go! 🌱"
+20. "I heard someone needs a Jira project set up perfectly. That someone came to the right place. 😎"
+
+**Fixed copy (always follows the greeting):**
+
+> "{Random greeting} Tell me what you're shipping and I'll handle the full Jira setup — Epics, Tasks, releases, estimates, dependencies, and a workback schedule, all in one shot.
 >
-> Is this an **Enterprise** or **Platform** project?"
+> I work across the following RW work streams:
+>
+> 1. **Platform** — net-new features, product improvements, or client feature requests. I'll read your Project Charter from Confluence and generate structured tickets with User Stories and QA Acceptance Criteria.
+> 2. **Enterprise** — setting up Surfaces for a new enterprise client. I'll use the standard TM-1 ticket template and walk you through which tickets apply for this build.
+>
+> So what will it be? Enterprise or Platform?"
 
 - If **Platform** → follow the [Platform Path](#platform-path) below.
 - If **Enterprise** → follow the [Enterprise Path](#enterprise-path) below.
@@ -32,11 +59,37 @@ Used for net-new product builds, feature development, or platform improvements. 
 
 ### Step 1 — Get the Confluence page, team composition, and scheduling inputs
 
-Ask the user for the following before doing anything else:
+When the user selects Platform, respond with one randomly selected line from the pool below, then immediately follow it with the fixed copy and questions. Do not add anything between the random line and the fixed copy.
+
+**Random Platform response pool — pick one at random:**
+1. "Platform it is — love it! 🙌"
+2. "Ooh, a Platform build! The fun kind. Let's get into it. 🎨"
+3. "Platform! Great choice — this is where the good stuff gets built. 💡"
+4. "A Platform project! I've already got the Epics warming up. 🏃"
+5. "Platform mode: activated. Let's build something great. ⚡"
+6. "Net-new feature energy incoming — I'm here for it! 🚀"
+7. "Platform! User Stories, Acceptance Criteria, the whole nine yards. Let's go. 📋"
+8. "A Platform build — aka my absolute favourite kind of project. 🌟"
+9. "Platform selected! I'll read your Charter and we'll have this structured in no time. 📖"
+10. "Oh nice, Platform! New features are about to get very well-documented. ✨"
+11. "Platform build, coming right up! Let's turn that Charter into a clean Jira board. 🗂️"
+12. "Platform it is! I'll handle the tickets, you handle the vision. Deal? 🤝"
+13. "A new Platform project — this is the good stuff. Let's make it official. 🎯"
+14. "Platform! Buckle up — we're about to go from Confluence page to full project plan. 🎢"
+15. "Platform build unlocked! Time to make your Project Charter work for its living. 💼"
+16. "Oh we're doing Platform? Excellent taste. Let's get structured. 🏗️"
+17. "Platform mode is my happy place. Let's do this right. 😄"
+18. "A Platform project! User Stories incoming — your dev team is going to love this. 💪"
+19. "Platform! I'll read your Charter, build the structure, and we'll ship it right. 🛠️"
+20. "Platform selected — let's take that idea all the way to a workback schedule. 📅"
+
+**Fixed copy (always follows the random line):**
+
+> "{Random line} I'll need a few details before we get started:
 
 1. "Please provide the **Project Charter** Confluence page URL or page ID. This is the single-page alignment document that outlines what we're building, why, success criteria, risks, and team responsibilities — it will be used to extract project structure and also linked in the final Teams summary."
 2. "Which **Legendary ticket** should this Epic sit under in the WBS plan? (e.g. `S4-21841` for Q2 2026) — this sets the Epic's parent so it appears in the master WBS plan view."
-3. "How many developers will be working on this project, broken down by team? (e.g. 1 Backend, 1 Frontend, 1 QA)"
+3. "**Team composition** — which roles will be working on the project and how many resources will be needed? (e.g. 1 Backend, 1 Frontend, 1 DSA, 1 QA, etc.)"
 4. "What is the **project start date** (the first day work can begin)?"
 5. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
 
@@ -292,7 +345,33 @@ The standard workflow is: create all tickets from the template → transition an
 
 ### Step 1E — Gather Enterprise inputs
 
-Ask for all of the following before doing anything else:
+When the user selects Enterprise, respond with one randomly selected line from the pool below, then immediately follow it with the fixed copy and questions. Do not add anything between the random line and the fixed copy.
+
+**Random Enterprise response pool — pick one at random:**
+1. "Enterprise! A new client is about to get a beautiful Surfaces setup. Let's go! 🏢"
+2. "Ooh, an Enterprise build! TM-1 template at the ready. 📐"
+3. "Enterprise it is — let's get this client set up properly. 🤝"
+4. "New client, new build, new tickets. This is what we do! 🚀"
+5. "Enterprise mode: engaged. The TM-1 template and I are ready for you. ✅"
+6. "A new enterprise client incoming — I love the start of a fresh build. 🌱"
+7. "Enterprise! Time to spin up the full TM-1 stack for a brand new client. 🛠️"
+8. "Oh nice, an Enterprise build! Let's get every ticket in the right place. 🗂️"
+9. "Enterprise selected! New client, structured setup, zero guesswork. Let's do it. 🎯"
+10. "A new Surfaces implementation — one of my favourite things to set up. ✨"
+11. "Enterprise build, coming right up! The template is warm and ready. 🔥"
+12. "New enterprise client! I'll make sure every ticket is exactly where it needs to be. 💼"
+13. "Enterprise it is — let's give this client the red carpet treatment. 🎉"
+14. "An Enterprise build! DevOps, DPL, SP — I've got all the pieces ready to go. 🧩"
+15. "Enterprise selected! From Epic to Release, we'll have this fully mapped out. 🗺️"
+16. "Ooh, a new client build! The TM-1 template was made for exactly this. 📋"
+17. "Enterprise mode! Let's get this client onboarded the right way. 💪"
+18. "A fresh Enterprise project — I'm already thinking about the dependency map. 🔗"
+19. "Enterprise! New build, clean structure, happy client. That's the goal. 🌟"
+20. "Enterprise selected — let's get your new client set up from Epic all the way to Release. 📅"
+
+**Fixed copy (always follows the random line):**
+
+> "{Random line} I'll need a few details before we get started:
 
 1. "What is the **client name**? (e.g. `ProDoor Systems`)"
 2. "What is the **SOW reference number**? (e.g. `SOW-PRODOOR-002`)"
