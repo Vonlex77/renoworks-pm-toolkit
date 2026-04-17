@@ -1,15 +1,34 @@
 ---
 name: jira-ticket-creator
-description: Create one-off Jira Tasks and/or Stories (with Sub-tasks) for a project already in progress. Use this skill when the user wants to add a small number of tickets (1–10) to an existing Jira project and Epic — NOT for setting up a new initiative from scratch. Accepts plain-language descriptions and interprets them into structured Jira fields: summary, assignee, labels, epic link, start date, end date, and original estimate.
+description: Create one-off Jira Tasks and/or Stories (with Sub-tasks) for a project already in progress. Supports two work streams — Platform (net-new features/products) and Enterprise (client Surfaces implementations). Use this skill when the user wants to add a small number of tickets (1–10) to an existing Jira project and Epic — NOT for setting up a new initiative from scratch. Platform tickets include User Stories and Acceptance Criteria. Enterprise tickets follow TM-1 naming conventions and issue types (DPL Task, DS Task, DPL Defect) with no User Story generation.
 ---
 
 # Jira Ticket Creator
 
-Creates Tasks and/or Stories (with optional Sub-tasks) inside an existing Jira project and Epic, from plain-language descriptions.
+Creates tickets inside an existing Jira project and Epic, from plain-language descriptions. Routes to the **Platform** or **Enterprise** workflow based on the PM's answer to the first question.
 
 **CloudId:** `renoworks.atlassian.net`
 
-## Workflow
+---
+
+## Step 0 — Identify the work stream
+
+When this skill loads, greet the user with the following message before asking anything else:
+
+> "Hi! I'll help you add tickets to an existing Jira project. Which type of build is this for?
+> - **Platform** — net-new features or product work. I'll generate structured tickets with User Stories and Acceptance Criteria.
+> - **Enterprise** — an active client Surfaces build. I'll use the correct issue types (DPL Task, DS Task, etc.) and naming conventions from the TM-1 template.
+>
+> Is this **Platform** or **Enterprise**?"
+
+- If **Platform** → follow the [Platform Path](#platform-path) below.
+- If **Enterprise** → follow the [Enterprise Path](#enterprise-path) below.
+
+---
+
+## Platform Path
+
+Used for net-new product builds and feature development. Tickets include AI-generated User Stories and Acceptance Criteria.
 
 ### Step 1 — Gather inputs
 
@@ -175,9 +194,175 @@ Output a table of all created issues:
 
 Include direct Jira links: `https://renoworks.atlassian.net/browse/{KEY}`
 
+---
+
+## Enterprise Path
+
+Used for active client Surfaces builds. Tickets use the correct TM-1 issue types and naming conventions. No User Story or Acceptance Criteria generation — descriptions are brief and operational.
+
+### Step 1E — Gather inputs
+
+Ask for all of the following before proceeding:
+
+1. **Jira project key** (e.g. `S4`) — infer from Epic key if provided
+2. **Epic** — name or key of the existing client Epic (e.g. `S4-14866 — ProDoor Systems Upgrade [SOW-PRODOOR-002]`)
+3. **SOW reference number** (e.g. `SOW-PRODOOR-002`) — used in ticket naming for DPL and UAT feedback tickets
+4. **Ticket descriptions** — plain language descriptions of each ticket to create, including any known details (assignee, dates, estimates)
+
+All four are required before proceeding.
+
+### Step 2E — Find the Epic
+
+Search for the Epic using `mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql`:
+
+```jql
+project = {KEY} AND issuetype = Epic AND summary ~ "{client name or epic name}" ORDER BY created DESC
+```
+
+- If found, confirm: "Found Epic {KEY} — {summary}. Is this the correct one?"
+- If multiple matches, list them and ask the user to choose
+- If not found, ask the user to provide the Epic key directly
+
+### Step 3E — Fetch project metadata and resolve assignees
+
+Run all of the following in parallel:
+
+**Metadata:** Call `mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata` to confirm available issue types. For Enterprise projects, confirm availability of:
+- `DPL Task` — Digital Product Library work
+- `DS Task` — Design Services / Sample Photo work
+- `DPL Defect` — defects raised against DPL deliverables
+- `Task` — general dev or project work
+- `Defect` — general defects
+
+Call `mcp__claude_ai_Atlassian__getJiraIssueTypeMetaWithFields` for each issue type in use (in parallel) to determine required fields and Epic linking method.
+
+**Assignees:** For any named assignees, call `mcp__claude_ai_Atlassian__lookupJiraAccountId` in parallel. Flag unresolved names in the Step 5E confirmation.
+
+### Step 4E — Interpret tickets
+
+For each ticket description, determine the correct issue type, summary, label, and description using the rules below.
+
+#### Issue Type Routing
+
+Select the issue type based on the nature of the work described:
+
+| If the description mentions... | Use issue type |
+|-------------------------------|----------------|
+| DPL work: 3D models, library transfers, overlays, RWDs, interior/exterior product assets | `DPL Task` |
+| DPL defects or QA feedback on DPL deliverables | `DPL Defect` |
+| Sample scene work: masking, shadow files, hotspots, repo images, sample photo tabs | `DS Task` |
+| UAT or QA feedback rounds (multi-item feedback from client testing) | `DPL Task` (UAT naming — see below) |
+| Dev work: frontend config, backend changes, configurator adjustments | `Task` |
+| General defects not specific to DPL | `Defect` |
+
+If the type is ambiguous, ask the PM before proceeding.
+
+#### Summary Naming Convention
+
+Enterprise summaries do **not** follow the `[TEAM] - [PRODUCT] - [SUMMARY]` Platform convention. Use these patterns instead:
+
+| Issue type | Summary format | Example |
+|------------|---------------|---------|
+| `DPL Task` (regular) | `{SOW-REF}: {description}` | `SOW-PRODOOR-002: Library transfer from S2 to S4` |
+| `DPL Task` (UAT/QA feedback round) | `{SOW-REF} - UAT Feedback ({Date})` | `SOW-PRODOOR-002 - UAT Feedback (Sept 2, 2025)` |
+| `DPL Defect` (from QA feedback) | `{SOW-REF}: ({QA Feedback Date}) {description}` | `SOW-PRODOOR-002: (QA Feedback May 27, 2025) Library transfer` |
+| `DS Task` | `SP - {description}` | `SP - Mask and deploy 3 new interior sample scenes` |
+| `Task` (dev work) | `Dev - {description}` | `Dev - Create a pop-up on internal sample scenes` |
+| `Task` (UAT feedback) | `Dev - {Client Name} {SOW-REF} - UAT Feedback ({Date})` | `Dev - ProDoor Systems SOW-PRODOOR-002 - UAT Feedback (Sept 2, 2025)` |
+| `Defect` | Plain descriptive summary | `ProDoor - Garage doors do not apply` |
+
+#### Labels
+
+| Issue type | Label |
+|------------|-------|
+| `DPL Task` | `DPL` |
+| `DPL Defect` | `DPL` |
+| `DS Task` | `SampleProjects` |
+| `Task` | None by default — add `Dev-Backend` or `Dev-Frontend` if the work is clearly one or the other |
+| `Defect` | None by default |
+
+Do **not** add `WBS` to Enterprise tickets.
+
+#### Description Format
+
+Enterprise ticket descriptions are brief and operational — no User Story or Acceptance Criteria. Use Jira wiki markup.
+
+**Standard format:**
+```
+[1–3 sentences describing the work to be done.]
+
+*App Configuration:* [Client Name - App Configuration|{Confluence App Config URL}]  ← include if relevant
+*Basecamp:* [{Basecamp URL}|{Basecamp URL}]  ← include if relevant
+```
+
+**For UAT/QA feedback tickets**, list the feedback items as a bulleted checklist:
+```
+UAT feedback items from [client name] — [date].
+
+*Basecamp:* [{feedback thread URL if known}|{URL}]
+
+h3. Feedback Items
+* [Feedback item 1]
+* [Feedback item 2]
+* [Feedback item 3]
+```
+
+If the Basecamp or App Config URL is not known, omit those lines rather than leaving blank placeholders. If no estimate is provided, infer based on scope and note it as AI-inferred: `_⚠ Estimate is AI-inferred._`
+
+#### Estimation Rules
+
+Same rules as Platform:
+- **1 day = 6 hours**
+- **Estimates in 2-hour increments only** — always round up
+- T-shirt sizes: XS=2h · S=4h · M=8h · L=18h · XL=30h
+- Store as seconds in `timeoriginalestimate` (e.g. 8h → `28800`)
+
+### Step 5E — Present summary and confirm
+
+Show a structured summary before creating anything:
+
+```
+Project: {KEY} | Epic: {EPIC-KEY} — {Epic Summary}
+SOW: {SOW-REF}
+
+Tickets to create ({N}):
+  [{Type}] {Summary} | Label: {label} | Assignee: {Name ✓ or ⚠ not found} | Est: {Xh}
+```
+
+Ask: "Shall I create these? Any changes?"
+
+Wait for explicit confirmation before continuing.
+
+### Step 6E — Create tickets
+
+Create all tickets in parallel using `mcp__claude_ai_Atlassian__createJiraIssue` with:
+- `issuetype`: as determined in Step 4E
+- `summary`: formatted per Enterprise naming convention
+- `description`: brief operational description per Step 4E format
+- `assignee`: account ID resolved in Step 3E (if resolved)
+- `labels`: per-ticket label from Step 4E (if any) — do **not** include `WBS`
+- Epic link: use `parent` (team-managed) or `customfield_10014` (company-managed) per Step 3E metadata
+- `startDate`: in `YYYY-MM-DD` format (if provided)
+- `duedate`: in `YYYY-MM-DD` format (if provided)
+- `timeoriginalestimate`: in seconds (if estimated)
+
+### Step 7E — Print summary
+
+Output a table of all created issues:
+
+| Type | Key | Summary | Label | Est | Assignee |
+|------|-----|---------|-------|-----|----------|
+| DPL Task | S4-101 | SOW-PRODOOR-002: Library transfer from S2 to S4 | DPL | 8h | — |
+| DS Task | S4-102 | SP - Mask and deploy 3 new interior sample scenes | SampleProjects | 8h | — |
+| Task | S4-103 | Dev - Create a pop-up on internal sample scenes | — | 4h | Alec G. |
+
+Include direct Jira links: `https://renoworks.atlassian.net/browse/{KEY}`
+
+---
+
 ## Notes
 
 - Always confirm with the user before creating any issues
-- If an issue type (e.g. Sub-task, Story) is not available in the project, inform the user and ask how to proceed
+- If a required issue type (e.g. DPL Task, DS Task) is not available in the project, inform the user and ask how to proceed
 - If start/end dates are not provided, leave them blank — do not invent dates
-- If a field is not available for the project type (per Step 3 metadata), notify the user rather than silently skipping it
+- If a field is not available for the project type (per Step 3/3E metadata), notify the user rather than silently skipping it
