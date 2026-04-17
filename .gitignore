@@ -1,0 +1,9 @@
+# API credentials
+claude-api.env
+
+# Tests
+tests/
+
+# Python cache
+__pycache__/
+*.pyc

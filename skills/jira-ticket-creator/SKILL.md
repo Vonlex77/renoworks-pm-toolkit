@@ -15,7 +15,7 @@ Creates Tasks and/or Stories (with optional Sub-tasks) inside an existing Jira p
 
 Ask for all of the following before proceeding:
 
-1. **Jira project key** (e.g. `S4`, `RW2`, `MAINT`)
+1. **Jira project key** (e.g. `S4`, `RW2`, `MAINT`) — if the user provides an Epic key (e.g. `S4-1234`), infer the project key from it automatically and do not ask separately
 2. **Epic** — name or key of the existing Epic to link all tickets to
 3. **Ticket descriptions** — plain language descriptions of each ticket, including any known details (assignee, dates, sub-tasks, estimates, labels)
 
@@ -33,14 +33,16 @@ project = {KEY} AND issuetype = Epic AND summary ~ "{epic name}" ORDER BY create
 - If multiple matches are found, list them and ask the user to choose
 - If not found, ask the user to provide the Epic key directly
 
-### Step 3 — Fetch project metadata
+### Step 3 — Fetch project metadata and resolve assignees
 
-Call `mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata` with the project key to confirm available issue types (Task, Story, Sub-task, etc.).
+Run all of the following in parallel:
 
-For each issue type you'll use, call `mcp__claude_ai_Atlassian__getJiraIssueTypeMetaWithFields` to determine:
+**Metadata:** Call `mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata` with the project key to confirm available issue types (Task, Story, Sub-task, etc.). Then call `mcp__claude_ai_Atlassian__getJiraIssueTypeMetaWithFields` for each issue type you'll use (these can also run in parallel) to determine:
 - Required fields
 - How to link to the Epic: look for a `parent` field (team-managed) or `customfield_10014` (company-managed)
 - Whether `startDate`, `duedate`, and `timeoriginalestimate` are available
+
+**Assignees:** For any named assignees in the ticket descriptions, call `mcp__claude_ai_Atlassian__lookupJiraAccountId` for each name now (in parallel). Track resolved account IDs and flag any names that could not be matched — the confirmation summary in Step 5 will show resolved vs. unresolved status so the user can correct names before committing.
 
 ### Step 4 — Interpret tickets
 
@@ -63,16 +65,18 @@ From the plain-language descriptions, extract the following for each ticket:
 
 Every Task, Story, and Sub-task must include a `description` field. Generate the content as follows:
 
+Use Jira wiki markup for all descriptions so they render correctly in every Jira view.
+
 **For Tasks and Stories:**
 
 ```
-**User Story**
+h2. User Story
 As a [user type], I want to [action], so that [benefit].
 
-**Acceptance Criteria**
-- [Testable condition 1]
-- [Testable condition 2]
-- [Testable condition 3]
+h2. Acceptance Criteria
+* [Testable condition 1]
+* [Testable condition 2]
+* [Testable condition 3]
 ```
 
 **For Sub-tasks:**
@@ -80,16 +84,16 @@ As a [user type], I want to [action], so that [benefit].
 ```
 [1–3 sentences describing the specific work to be done and relevant context.]
 
-**Acceptance Criteria**
-- [Testable condition 1]
-- [Testable condition 2]
+h2. Acceptance Criteria
+* [Testable condition 1]
+* [Testable condition 2]
 ```
 
 Rules:
 - User stories should be written from the perspective of the end user or stakeholder
 - Acceptance criteria must be specific and testable — avoid vague language like "works correctly"
 - Sub-task descriptions should reference the parent story context where helpful
-- If no estimate is given, note it as AI-inferred in the description below the acceptance criteria: `> ⚠️ Estimate is AI-inferred.`
+- If no estimate is given, note it as AI-inferred in the description below the acceptance criteria: `_⚠ Estimate is AI-inferred._`
 
 #### Summary Naming Convention
 
@@ -114,51 +118,33 @@ Sub-task summaries do not need to follow this convention — use a concise descr
 
 - **1 day = 6 hours**
 - **Estimates in 2-hour increments only**: 2h, 4h, 6h, 8h, etc. Always round up (e.g. 3h → 4h, 7h → 8h)
-- T-shirt size mapping:
-
-| Signal | Hours |
-|---|---|
-| XS / trivial | 2h |
-| S / small | 4h |
-| M / medium | 8h |
-| L / large | 18h |
-| XL / extra large | 30h |
+- T-shirt sizes: XS=2h · S=4h · M=8h · L=18h · XL=30h
 
 - If no estimate is given, infer based on task type and complexity, then flag it as AI-inferred in the description
 - Store as seconds in `timeoriginalestimate` (e.g. 8h → `28800`)
 
 ### Step 5 — Present summary and confirm
 
-Show a structured summary before creating anything:
+Show a structured summary before creating anything. Include assignee resolution status from Step 3 so the user can correct any unmatched names before committing:
 
 ```
-Project: {KEY}  |  Epic: {EPIC-KEY} — {Epic Summary}
-
+Project: {KEY} | Epic: {EPIC-KEY} — {Epic Summary}
 Tickets to create ({N}):
-
-  [Story] Frontend - RW Pro - Role-based Homepage
-    Assignee: Jane Smith  |  Labels: WBS, roles  |  Est: 8h  |  2025-06-02 → 2025-06-03
-    Sub-tasks: Set up route, Build component, Write unit tests
-
-  [Task] Backend - RW Pro - Permission Validation Endpoint
-    Assignee: John Doe  |  Labels: WBS  |  Est: 12h  |  2025-06-02 → 2025-06-04
+  [{Type}] {Summary} | Assignee: {Name ✓ or ⚠ not found} | Labels: {labels} | Est: {Xh} | {start} → {due}
+    Sub-tasks: {list if any}
 ```
 
 Ask: "Shall I create these? Any changes?"
 
 Wait for explicit confirmation before continuing.
 
-### Step 6 — Resolve assignees
-
-For any named assignees, call `mcp__claude_ai_Atlassian__lookupJiraAccountId` to get their account ID before creating issues. If a name cannot be resolved, notify the user and leave the field blank.
-
-### Step 7 — Create Tasks and Stories
+### Step 6 — Create Tasks and Stories
 
 Create each Task or Story using `mcp__claude_ai_Atlassian__createJiraIssue` with:
 - `issuetype`: Task or Story
 - `summary`: formatted per naming convention
 - `description`: generated per description template (User Story + Acceptance Criteria)
-- `assignee`: account ID from Step 6 (if resolved)
+- `assignee`: account ID resolved in Step 3 (if resolved)
 - `labels`: always include `WBS`, plus any others
 - Epic link: use `parent` (team-managed) or `customfield_10014` (company-managed) per Step 3 metadata
 - `startDate`: in `YYYY-MM-DD` format (if provided)
@@ -167,17 +153,17 @@ Create each Task or Story using `mcp__claude_ai_Atlassian__createJiraIssue` with
 
 Create all top-level tickets in parallel for efficiency.
 
-### Step 8 — Create Sub-tasks
+### Step 7 — Create Sub-tasks
 
 For each Sub-task, create using `mcp__claude_ai_Atlassian__createJiraIssue` with:
 - `issuetype`: Sub-task
 - `summary`: concise descriptive phrase
 - `description`: generated per description template (Description + Acceptance Criteria)
-- `parent`: the key of the Task or Story created in Step 7
+- `parent`: the key of the Task or Story created in Step 6
 
 Create all Sub-tasks in parallel for efficiency.
 
-### Step 9 — Print summary
+### Step 8 — Print summary
 
 Output a table of all created issues:
 

@@ -4,11 +4,11 @@ A Claude Code plugin for the Renoworks Project Management team. Bundles three sk
 
 ## Included Skills
 
-| Skill | Trigger phrase |
-|---|---|
-| **Jira Project Setup** | "Set up a new Jira project from this Confluence page" |
-| **Jira Ticket Creator** | "Create a few Jira tickets for this Epic" |
-| **Project Charter** | "Fill in the project charter from this discovery page" |
+| Skill | Description | Trigger phrase |
+|---|---|---|
+| **Project Charter** | Populate sections of a Confluence project charter from a discovery or requirements page | "Fill in the project charter from this discovery page" |
+| **Jira Project Setup** | Full project setup in Jira — creates Epics, Tasks, and Releases for a new initiative | "Set up a new Jira project from this Confluence page" |
+| **Jira Ticket Creator** | Create one-off tickets for projects already set up in Jira | "Create a few Jira tickets for this Epic" |
 
 ---
 
@@ -52,14 +52,14 @@ That's it. The skills are now available in every Claude Code session.
 
 Just describe what you want in plain language — Claude will pick up the right skill automatically.
 
-**Jira Project Setup** — use when starting a new initiative from a Confluence project charter:
-> "Set up the Jira project from this charter: https://renoworks.atlassian.net/wiki/..."
-
-**Jira Ticket Creator** — use when adding a handful of tickets to an existing Epic:
-> "Create two backend tickets and one QA ticket under the S4 Roles & Permissions epic"
-
 **Project Charter** — use when you have a discovery doc and want to populate a charter template:
 > "Fill in the project charter at [target URL] using the discovery doc at [source URL]"
+
+**Jira Project Setup** — use when starting a brand-new initiative and need full Jira structure (Epics, Tasks, Releases) created from a Confluence project charter:
+> "Set up the Jira project from this charter: https://renoworks.atlassian.net/wiki/..."
+
+**Jira Ticket Creator** — use when the project is already set up in Jira and you just need to add a handful of one-off tickets to an existing Epic:
+> "Create two backend tickets and one QA ticket under the S4 Roles & Permissions epic"
 
 ---
 

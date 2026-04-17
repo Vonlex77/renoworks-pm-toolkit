@@ -11,14 +11,16 @@ Sets up a structured Jira initiative by reading a Confluence brief, then interac
 
 ## Workflow
 
-### Step 1 — Get the Confluence page and team composition
+### Step 1 — Get the Confluence page, team composition, and scheduling inputs
 
 Ask the user for the following before doing anything else:
 
 1. "Please provide the **Project Charter** Confluence page URL or page ID. This is the single-page alignment document that outlines what we're building, why, success criteria, risks, and team responsibilities — it will be used to extract project structure and also linked in the final Teams summary."
 2. "How many developers will be working on this project, broken down by team? (e.g. 1 Backend, 1 Frontend, 1 QA)"
+3. "What is the **project start date** (the first day work can begin)?"
+4. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
 
-Both are required before proceeding. Store the developer counts per team — they are used in Step 10 to schedule tasks correctly based on available daily capacity.
+All four are required before proceeding. Store the developer counts per team and the scheduling dates — they are used throughout the workflow to estimate task dates and flag delivery risk.
 
 Read the page using `mcp__claude_ai_Atlassian__getConfluencePage`.
 
@@ -61,36 +63,54 @@ For issue types you'll use (Epic, Task, Release), call `mcp__claude_ai_Atlassian
 - Required fields
 - How to link Tasks to Epics: look for a `parent` field (team-managed projects) or `Epic Link` / `customfield_10014` (company-managed projects)
 
-### Step 4 — Present summary and confirm
+### Step 4 — Generate Task content and confirm
 
-Show a structured summary before doing anything:
+Generate all task content before doing anything in Jira. Use all available context: Confluence page content, Epic description, task summary.
 
+**For each Task, generate:**
+- **User Story**: `As a [user type], I want to [action], so that [benefit].`
+- **Expected Behaviour**: bullet list of observable outcomes when the feature works correctly — specific and technical
+- **QA Acceptance Criteria**: checklist of testable, verifiable conditions that must all be true for the task to be accepted
+- **Effort estimate**: see rules below
+
+**Estimation rules — apply to every task:**
+- 1 day = 6h. Increments of 2h only, always round up (e.g. 3h → 4h, 13h → 14h).
+- Priority order: (1) explicit page value — convert at 6h/day; (2) t-shirt size: XS=2h · S=4h · M=8h · L=18h · XL=30h · Complex=42h+; (3) AI inference — Backend 4–16h, Frontend 4–24h, QA 4–16h; choose higher band when uncertain
+- Flag AI-inferred estimates
+
+**Task description format (Jira wiki markup):**
+```
+h2. User Story
+As a [user type], I want to [action], so that [benefit].
+
+h2. Expected Behaviour
+* [behaviour]
+
+h2. QA Acceptance Criteria
+* [criterion]
+
+h2. Effort Estimate
+*Estimated:* Xh
+*Basis:* [Page-specified | Page signal: M | Inferred: reason]
+```
+
+**Then present the full plan for confirmation:**
 ```
 Project: {KEY}
-
-Epics ({N}):
-  • {Epic 1 name}
-  • {Epic 2 name}
-
+Epics ({N}): {Epic 1}, {Epic 2}
 Tasks ({N}):
-  Under {Epic 1}: {Task A} (~Xh), {Task B} (~Xh)
-  Under {Epic 2}: {Task C} (~Xh)
-
-Releases ({N}):
-  • {Release 1}
-
-Total estimated effort: ~Xh
+  Under {Epic 1}: [{Team}] {Summary} (~Xh) — [one-line User Story]
+Releases ({N}): {Release 1}
+Total estimated effort: ~Xh | Schedule: {start} → ~{projected end}
 ```
 
-Include a preliminary effort estimate (see Step 6b) for each task in this summary. If no estimates are available yet, note that they will be determined in the next step.
-
-Ask: "Shall I proceed with creating these? Any changes?"
+Ask: "Shall I proceed? Any changes to epics, tasks, or estimates?"
 
 Wait for explicit confirmation before continuing.
 
 ### Step 5 — Check for existing Epics
 
-For each Epic, search before creating:
+Run all Epic duplicate checks in parallel — each JQL lookup is independent:
 
 ```jql
 project = {KEY} AND issuetype = Epic AND summary ~ "{epic name}" ORDER BY created DESC
@@ -99,95 +119,19 @@ project = {KEY} AND issuetype = Epic AND summary ~ "{epic name}" ORDER BY create
 - If an exact or close match is found: reuse it, inform the user ("Found existing Epic: {KEY} — {summary}")
 - If not found: create using `mcp__claude_ai_Atlassian__createJiraIssue` with `labels: ["WBS"]`
 
-### Step 6 — Generate Task content with AI
+Epic creations can also run in parallel once all lookups complete.
 
-For each Task, before creating it, generate the following fields using all available context (Confluence page content, Epic description, task summary):
+### Step 6 — Create Tasks
 
-**User Story**
-```
-As a [specific user type], I want to [action], so that [benefit/outcome].
-```
-
-**Expected Behaviour**
-A bullet list of observable outcomes when the feature/task works correctly. Be specific and technical where context allows.
-
-**QA Acceptance Criteria**
-A checklist of testable, verifiable conditions that must all be true for the task to be accepted as done.
-
-Format the Task description using Jira wiki markup:
-
-```
-h2. User Story
-As a [user type], I want to [action], so that [benefit].
-
-h2. Expected Behaviour
-* [behaviour 1]
-* [behaviour 2]
-* [behaviour 3]
-
-h2. QA Acceptance Criteria
-* [criterion 1]
-* [criterion 2]
-* [criterion 3]
-```
-
-Present the generated content for each Task and ask: "Does this look correct? Any edits before I create it?" Proceed task-by-task or ask if the user wants to review all at once.
-
-### Step 6b — Estimate effort per Task
-
-**Team conventions — apply these to every estimate:**
-- **1 day = 6 hours** of effort. Always convert day-based estimates using this rate (e.g. "2 days" = 12h, "half a day" = 3h → round up to 4h).
-- **Estimates must be in 2-hour increments**: 2h, 4h, 6h, 8h, 10h, 12h, etc. Always round up to the next even increment (e.g. 1h → 2h, 3h → 4h, 13h → 14h, 17h → 18h). Never produce an odd-hour estimate.
-
-For each Task, determine a time estimate using this priority order:
-
-**1. Explicit page value** — if the Confluence page stated a specific estimate for this task (e.g. "3 days", "8h", "5 points"), use it directly. Convert days to hours at 6h/day, then round up to the nearest 2-hour increment.
-
-**2. Relative page signal** — if the page used a t-shirt size or complexity label, map it:
-
-| Signal | Hours |
-|--------|-------|
-| XS / trivial | 2h |
-| S / small | 4h |
-| M / medium | 8h |
-| L / large | 18h |
-| XL / extra large | 30h |
-| Complex / multi-sprint | 42h+ (flag for user review) |
-
-**3. AI inference** — if no effort signal exists on the page, infer based on the task's User Story, Expected Behaviour, and team context:
-
-- **Backend tasks**: API endpoints, DB changes, and business logic typically range 4–16h depending on complexity and number of endpoints.
-- **Frontend tasks**: UI components and integrations typically range 4–12h; full flows or new pages range 12–24h.
-- **QA tasks**: End-to-end testing suites typically range 8–16h; smoke/regression for a single feature 4–8h.
-- Consider dependencies: if a task blocks or depends on multiple others, add buffer.
-- When uncertain between two bands, choose the higher one and note the assumption.
-- After arriving at a raw estimate, apply the 2-hour increment rounding rule before finalizing.
-
-**Output format** — record each estimate as:
-- Hours (e.g. `8h`) for the Jira `timeoriginalestimate` field
-- A one-line rationale (e.g. "Inferred: 2 new API endpoints + auth middleware, medium complexity → 14h")
-
-Add a `h2. Effort Estimate` section to the Task description:
-
-```
-h2. Effort Estimate
-*Estimated:* 8h
-*Basis:* [Page-specified | Page signal: M | Inferred: reason]
-```
-
-If the estimate is AI-inferred (not from the page), flag it clearly so the user can adjust.
-
-### Step 7 — Create Tasks
-
-Create each Task using `mcp__claude_ai_Atlassian__createJiraIssue` with:
+Create all Tasks in parallel for efficiency using `mcp__claude_ai_Atlassian__createJiraIssue` with:
 - `issuetype`: Task (or Story if that's the appropriate type)
 - `summary`: formatted as `[TEAM] - [RW PRODUCT] - [TASK SUMMARY]` (see Step 2 naming convention)
-- `description`: the generated wiki-markup content from Step 6 (including the `h2. Effort Estimate` section from Step 6b)
+- `description`: the generated wiki-markup content from Step 4 (User Story, Expected Behaviour, QA Acceptance Criteria, and Effort Estimate sections)
 - `timeoriginalestimate`: the estimate in seconds (e.g. 8h → `28800`). Always set this field — it maps to the "Original Estimate" field in Jira. If Step 3 metadata indicates it is unavailable, notify the user rather than silently skipping it.
 - `labels`: `["WBS"]` — always include this label on every Task so it appears on the master workback schedule
 - Epic link: use `parent` field (team-managed) or `customfield_10014` (company-managed) based on Step 3 metadata
 
-### Step 8 — Create Release issues and link Tasks
+### Step 7 — Create Release issues and link Tasks
 
 Create each Release issue using `mcp__claude_ai_Atlassian__createJiraIssue` with:
 - `issuetype`: Deployment Release (or the matching type from Step 3 metadata)
@@ -196,7 +140,7 @@ Create each Release issue using `mcp__claude_ai_Atlassian__createJiraIssue` with
 - `labels`: `["WBS"]` — always include this label on every Release so it appears on the master workback schedule
 - Link to parent Epic if the field is available
 
-After creating the Dev Release, link every Task created in Step 7 to it using `mcp__claude_ai_Atlassian__createIssueLink`:
+After creating the Dev Release, link every Task created in Step 6 to it using `mcp__claude_ai_Atlassian__createIssueLink`:
 - `inwardIssue`: the Task key (the blocker)
 - `outwardIssue`: the Dev Release key (the blocked issue)
 - `linkType`: `Blocker`
@@ -205,7 +149,7 @@ This results in each Task showing **"blocks" → Dev Release**, and the Dev Rele
 
 Create all Task→Release links in parallel for efficiency.
 
-### Step 9 — Identify and create dependencies
+### Step 8 — Identify and create dependencies
 
 After all Tasks and Releases are created, review every ticket holistically and infer dependencies using the following signals:
 
@@ -221,16 +165,8 @@ After all Tasks and Releases are created, review every ticket holistically and i
 
 ```
 Dependency Map:
-
-  S4-101 (Backend - API Endpoints) → blocks → S4-103 (Frontend - UI Integration)
-    Reason: Frontend consumes the API built in S4-101
-
-  S4-101 (Backend - API Endpoints) → blocks → S4-104 (QA - End-to-End Testing)
-  S4-103 (Frontend - UI Integration) → blocks → S4-104 (QA - End-to-End Testing)
-    Reason: QA cannot test until both Backend and Frontend are complete
-
-  S4-102 (Backend - DB Migration) → blocks → S4-101 (Backend - API Endpoints)
-    Reason: API depends on the schema introduced in S4-102
+  {KEY} ({Summary}) → blocks → {KEY} ({Summary})
+    Reason: [one-line explanation]
 ```
 
 Ask: "Does this dependency map look correct? Any changes before I create the links?"
@@ -242,20 +178,13 @@ Wait for explicit confirmation.
 - `outwardIssue`: the blocked task key
 - `linkType`: `Blocker`
 
-Create all dependency links in parallel for efficiency. Do not re-create any links already established in Step 8 (Task → Release blocker links).
+Create all dependency links in parallel for efficiency. Do not re-create any links already established in Step 7 (Task → Release blocker links).
 
-### Step 10 — Build workback schedule and set dates
+### Step 9 — Build workback schedule and set dates
 
-#### 10a — Get scheduling inputs
+#### 9a — Scheduling rules
 
-Ask the user:
-> "To build the workback schedule, I need two things:
-> 1. What is the **project start date** (the first day work can begin)?
-> 2. Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
-
-Wait for the response before continuing.
-
-#### 10b — Scheduling rules
+Use the project start date and target delivery date collected in Step 1.
 
 Apply these rules consistently when calculating dates:
 
@@ -269,23 +198,9 @@ Apply these rules consistently when calculating dates:
 - **Due date** = start date + duration in working days − 1 (i.e. the last working day the task is active).
 - The **Release issue** start and due date = the day all its blocking Tasks are complete.
 
-#### 10c — Present the schedule for confirmation
+#### 9b — Present the schedule for confirmation
 
-Output a schedule table before setting any dates:
-
-```
-Workback Schedule (start: YYYY-MM-DD)
-
-| Key | Summary | Est | Start | Due | Depends On |
-|-----|---------|-----|-------|-----|------------|
-| S4-102 | DB Migration | 6h | 2025-06-02 | 2025-06-02 | — |
-| S4-101 | API Endpoints | 12h | 2025-06-03 | 2025-06-04 | S4-102 |
-| S4-103 | Frontend UI Integration | 8h | 2025-06-03 | 2025-06-04 | S4-101 |
-| S4-104 | QA End-to-End Testing | 14h | 2025-06-05 | 2025-06-07 | S4-101, S4-103 |
-| S4-105 | Dev Release | — | 2025-06-10 | 2025-06-10 | all tasks |
-
-Total project duration: X working days (YYYY-MM-DD → YYYY-MM-DD)
-```
+Output a schedule table before setting any dates. Columns: Key | Summary | Est | Start | Due | Depends On. End with total project duration and date range.
 
 If a target delivery date was provided and the calculated end date exceeds it, flag the risk clearly:
 > "⚠ Schedule risk: projected completion is YYYY-MM-DD, which is X days past the target of YYYY-MM-DD."
@@ -294,19 +209,19 @@ Ask: "Does this schedule look correct? Any adjustments before I apply the dates 
 
 Wait for explicit confirmation.
 
-#### 10d — Apply dates to Jira
+#### 9c — Apply dates to Jira
 
 For each Task and Release issue, call `mcp__claude_ai_Atlassian__editJiraIssue` to set:
 - `startDate` — the calculated start date in `YYYY-MM-DD` format
 - `duedate` — the calculated due date in `YYYY-MM-DD` format
 
-If either field is not available for the project's issue type (per Step 3 metadata), notify the user which field is missing rather than silently skipping it.
+If either field is unavailable (per Step 3 metadata), notify the user rather than silently skipping it.
 
 > **Known limitation — company-managed projects:** The built-in `startDate` / `customfield_10015` field is system-managed ("LOCKED") in company-managed Jira projects and cannot be set via the REST API. If it fails, notify the user and ask them to make the field editable via Jira admin settings before retrying. The `duedate` field is standard and always works.
 
 Apply all date updates in parallel for efficiency.
 
-### Step 11 — Print summary
+### Step 10 — Print summary
 
 Output a table of all created and reused issues:
 
@@ -347,15 +262,11 @@ Tailor the specifics to the actual project — mention the delivery phases and t
 
 Use the actual task counts, team names, and total hours from the session. Format the total as "~Xh".
 
-**Example output (for reference only — do not copy verbatim):**
+Format (do not copy verbatim — tailor to actual project phases, team structure, and task counts):
 
-```
-RW Pro - Instant Estimate - New Toggle Feature - Project Charter - https://renoworks.atlassian.net/wiki/x/HoAB3Q
-The following Project Charter is intended to be a single-page alignment that outlines the project — what we're building and why, clear success criteria so we know what "done" looks like, known risks and mitigations, a phased delivery timeline (backend → frontend → QA), and a RACI matrix so there's no ambiguity on decision-making or responsibilities. The goal is for anyone on the team to get up to speed without needing a separate kickoff conversation.
+`{Initiative Name} - Project Charter - {URL}` → 2–3 sentences: what the charter is, what it covers (building rationale, success criteria, risks, delivery phases, RACI), and that it lets anyone get up to speed without a kickoff.
 
-RW Pro - Instant Estimate - New Toggle Feature - Jira Project - https://renoworks.atlassian.net/browse/S4-23077
-Based on the scope defined within the Project Charter, all required tasks for development have been defined in the following Jira Epic — 2 backend tasks for updating the RW Pro API endpoint, with 5 frontend tasks for Surfaces and AppBuilder to surface the Instant Estimate feature to Homeowners via a toggle control within the CMS. As of today, the total estimated development effort is currently ~56 hours to reach dev completion.
-```
+`{Initiative Name} - Jira Project - {Epic URL}` → 2–3 sentences: reference the charter as scope source, describe tasks created per team and what each covers, state total estimated hours as `~Xh`.
 
 ## Notes
 

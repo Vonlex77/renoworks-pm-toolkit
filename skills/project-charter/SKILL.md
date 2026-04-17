@@ -16,6 +16,7 @@ Reads a source Confluence page (e.g. a discovery or requirements doc) and uses t
 If the user has not already provided both URLs, ask:
 - "What is the URL of the **source** page (e.g. discovery doc, requirements doc)?"
 - "What is the URL of the **target** page to fill in?"
+- "Which sections would you like me to fill in, or shall I fill all empty ones I find?"
 
 Extract the numeric page ID from the URL path (e.g. `.../pages/3670278205/...` → `3670278205`).
 
@@ -76,46 +77,23 @@ Wait for explicit confirmation before proceeding.
 
 ### Step 6 — Update the target page
 
-**Do not manually construct ADF JSON.** Use the Python workflow below — it is reliable and avoids the errors that come from hand-writing large nested JSON.
+**Do not manually construct ADF JSON.** Use the file-based Python workflow instead:
 
-#### Python modification workflow
+#### Pre-flight check — paragraph-in-table
 
-```python
-import json
+Before modifying the ADF, inspect the fetched body for any `paragraph` node that appears directly inside a `tableBody` or `table` content array (alongside `tableRow` nodes). Confluence accepts this on read but rejects it on write (400 error). Fix: move such nodes into the nearest `layoutColumn`'s content array instead.
 
-with open('/tmp/target_adf.json', 'w') as f:
-    json.dump(target_page_adf_body, f)  # save the fetched ADF body dict
+#### Modification workflow
 
-# Make targeted modifications:
-data = json.load(open('/tmp/target_adf.json'))
+1. Save the fetched ADF body to `/tmp/target_adf.json` via `json.dump`
+2. Load it back and make targeted mutations — find nodes by `type` or `attrs.localId`, replace their `content` arrays in place
+3. Empty paragraph: replace content with `[{"text": "...", "type": "text"}]`
+4. Empty bullet list: replace the single empty `listItem` with populated `listItem` nodes, each with a fresh unique `localId` (e.g. `"sc-02"`, `"risk-03"`)
+5. Risk Assessment items: inline bold for risk name, plain text for description + mitigation — no nested lists
+6. Write result to `/tmp/adf_body_fixed.json` using `separators=(',', ':')`
+7. Validate: `node -e "JSON.parse(require('fs').readFileSync('/tmp/adf_body_fixed.json','utf8')); console.log('VALID')"`
 
-# Example: fill an empty paragraph
-panel = next(n for n in data['content'] if n['type'] == 'panel')
-panel['content'][1]['content'] = [{"text": "Your text here", "type": "text"}]
-
-# Example: replace empty bullet list items
-bullet_list = next(n for n in data['content'] if n.get('attrs', {}).get('localId') == 'LIST_LOCAL_ID')
-bullet_list['content'] = [
-    {"type": "listItem", "attrs": {"localId": "item-01"}, "content": [
-        {"type": "paragraph", "attrs": {"localId": "item-01-p"}, "content": [
-            {"text": "Item text", "type": "text"}
-        ]}
-    ]},
-    # ... more items
-]
-
-with open('/tmp/adf_body_fixed.json', 'w') as f:
-    json.dump(data, f, separators=(',', ':'))
-```
-
-Then validate: `node -e "JSON.parse(require('fs').readFileSync('/tmp/adf_body_fixed.json','utf8')); console.log('VALID')"`
-
-#### Key rules
-- Preserve all existing `localId` values for unchanged nodes
-- For empty bullet lists: replace the single empty `listItem` with multiple populated `listItem` nodes. Each new listItem should have a fresh unique `localId` (e.g. `"sc-02"`, `"risk-03"`, etc.)
-- For Risk Assessment items: use inline bold for the risk name followed by plain text for description + mitigation (do not use nested lists)
-- Preserve all other sections of the page (tables, RACI charts, layout sections, etc.) exactly as they were
-- **Paragraph-in-table gotcha:** The fetched ADF may contain a `paragraph` node inside a `table`'s content array (alongside `tableRow` nodes). Confluence accepts this on read but rejects it on write. Fix: move such paragraphs into the parent `layoutColumn`'s content instead.
+Preserve all existing `localId` values for unchanged nodes. Never truncate or omit existing sections (tables, RACI, deliverables, layout).
 
 Call `mcp__claude_ai_Atlassian__updateConfluencePage` with:
 - `contentFormat: "adf"`
