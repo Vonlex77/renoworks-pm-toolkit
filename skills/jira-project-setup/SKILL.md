@@ -35,11 +35,12 @@ Used for net-new product builds, feature development, or platform improvements. 
 Ask the user for the following before doing anything else:
 
 1. "Please provide the **Project Charter** Confluence page URL or page ID. This is the single-page alignment document that outlines what we're building, why, success criteria, risks, and team responsibilities — it will be used to extract project structure and also linked in the final Teams summary."
-2. "How many developers will be working on this project, broken down by team? (e.g. 1 Backend, 1 Frontend, 1 QA)"
-3. "What is the **project start date** (the first day work can begin)?"
-4. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
+2. "Which **Legendary ticket** should this Epic sit under in the WBS plan? (e.g. `S4-21841` for Q2 2026) — this sets the Epic's parent so it appears in the master WBS plan view."
+3. "How many developers will be working on this project, broken down by team? (e.g. 1 Backend, 1 Frontend, 1 QA)"
+4. "What is the **project start date** (the first day work can begin)?"
+5. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
 
-All four are required before proceeding. Store the developer counts per team and the scheduling dates — they are used throughout the workflow to estimate task dates and flag delivery risk.
+All five are required before proceeding. Store the Legendary key — it is set as the `parent` on Epic creation. Store the developer counts per team and the scheduling dates — they are used throughout the workflow to estimate task dates and flag delivery risk.
 
 Read the page using `mcp__claude_ai_Atlassian__getConfluencePage`.
 
@@ -136,7 +137,7 @@ project = {KEY} AND issuetype = Epic AND summary ~ "{epic name}" ORDER BY create
 ```
 
 - If an exact or close match is found: reuse it, inform the user ("Found existing Epic: {KEY} — {summary}")
-- If not found: create using `mcp__claude_ai_Atlassian__createJiraIssue` with `labels: ["WBS"]`
+- If not found: create using `mcp__claude_ai_Atlassian__createJiraIssue` with `labels: ["WBS"]` and `parent` set to the Legendary ticket key from Step 1 — this places the Epic under the correct Legendary in the master WBS plan view
 
 Epic creations can also run in parallel once all lookups complete.
 
@@ -301,11 +302,12 @@ Ask for all of the following before doing anything else:
 6. "Is there a **Figma design link**? (Optional — include if branding mock-ups or UI designs exist)"
 7. "**If CRM integration is needed**: what CRM is being integrated? (e.g. Salesforce, HubSpot — leave blank if not applicable)"
 8. "Which **Jira project key** should these tickets be created under? (e.g. `S4`)"
-9. "What is the **team composition**? (e.g. 1 DevOps, 1 Backend, 1 DPL artist, 1 SP masker — used to build the workback schedule)"
-10. "What is the **project start date** (the first day work can begin)?"
-11. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
+9. "Which **Legendary ticket** should this Epic sit under in the WBS plan? (e.g. `S4-23228` for Q3 2026) — this sets the Epic's parent so it appears in the master WBS plan view."
+10. "What is the **team composition**? (e.g. 1 DevOps, 1 Backend, 1 DPL artist, 1 SP masker — used to build the workback schedule)"
+11. "What is the **project start date** (the first day work can begin)?"
+12. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
 
-Required: all except Figma, CRM name, and target delivery date. Read the App Configuration Confluence page using `mcp__claude_ai_Atlassian__getConfluencePage` to inform task descriptions.
+Required: all except Figma, CRM name, and target delivery date. Store the Legendary key — it is set as the `parent` on Epic creation. Read the App Configuration Confluence page using `mcp__claude_ai_Atlassian__getConfluencePage` to inform task descriptions.
 
 ### Step 2E — Confirm ticket set and plan
 
@@ -395,7 +397,7 @@ project = {KEY} AND issuetype = Epic AND summary ~ "{Client Name}" ORDER BY crea
 ```
 
 - If a match is found: confirm with the PM whether to reuse it or create a new one.
-- If not found: create using `mcp__claude_ai_Atlassian__createJiraIssue`.
+- If not found: create using `mcp__claude_ai_Atlassian__createJiraIssue` with `parent` set to the Legendary ticket key from Step 1E — this places the Epic under the correct Legendary in the master WBS plan view.
 
 **Epic description (Jira wiki markup):**
 ```
