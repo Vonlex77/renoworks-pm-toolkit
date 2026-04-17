@@ -1,9 +1,9 @@
 ---
-name: project-charter
+name: project-charter-creation
 description: Fill in sections of a Confluence implementation/project page by reading a source discovery or requirements page. Use this skill when the user wants to populate sections like "Project Objective", "Business Objectives", "Success Criteria", "Risk Assessment", or similar structured sections on a Confluence page using content from another Confluence page.
 ---
 
-# Project Charter
+# Project Charter Creation
 
 Reads a source Confluence page (e.g. a discovery or requirements doc) and uses the content to fill in structured sections on a target Confluence page (e.g. an implementation or project brief).
 

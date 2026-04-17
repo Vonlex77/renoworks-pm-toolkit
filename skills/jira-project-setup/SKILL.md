@@ -1,9 +1,9 @@
 ---
-name: jira-project-setup
+name: jira-project-creation
 description: Set up a structured Jira initiative inside an existing project (RW2, S4, MAINT, etc.) by creating Epics, Tasks, and Release issues. Supports two work streams — Platform (net-new features/products) and Enterprise (client Surfaces implementations). Use this skill when the user wants to create a new Jira project, initiative, or feature set — including when they provide a Confluence page with project details, or when they want to create Epics/Tasks/Releases in Jira. Automatically generates User Story, Expected Behaviour, and QA Acceptance Criteria for Platform tasks. Uses the standard TM-1 Jira template for Enterprise builds.
 ---
 
-# Jira Project Setup
+# Jira Project Creation
 
 Sets up a structured Jira initiative for either a **Platform** project (net-new feature or product build) or an **Enterprise** project (client Surfaces implementation). Branches into the appropriate workflow based on the PM's answer to the first question.
 

@@ -1,9 +1,9 @@
 ---
-name: jira-ticket-creator
+name: jira-ticket-creation
 description: Create one-off Jira Tasks and/or Stories (with Sub-tasks) for a project already in progress. Supports two work streams — Platform (net-new features/products) and Enterprise (client Surfaces implementations). Use this skill when the user wants to add a small number of tickets (1–10) to an existing Jira project and Epic — NOT for setting up a new initiative from scratch. Platform tickets include User Stories and Acceptance Criteria. Enterprise tickets follow TM-1 naming conventions and issue types (DPL Task, DS Task, DPL Defect) with no User Story generation.
 ---
 
-# Jira Ticket Creator
+# Jira Ticket Creation
 
 Creates tickets inside an existing Jira project and Epic, from plain-language descriptions. Routes to the **Platform** or **Enterprise** workflow based on the PM's answer to the first question.
 
