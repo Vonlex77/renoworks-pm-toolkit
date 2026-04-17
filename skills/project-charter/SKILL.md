@@ -52,9 +52,9 @@ When this skill loads, greet the user with one randomly selected line from the p
 ### Step 1 — Get source and target page URLs
 
 If the user has not already provided both URLs, ask:
-- "What is the URL of the **source** page (e.g. discovery doc, requirements doc)?"
-- "What is the URL of the **target** page to fill in?"
-- "Which sections would you like me to fill in, or shall I fill all empty ones I find?"
+1. "What is the URL of the **source** page (e.g. discovery doc, requirements doc)?"
+2. "What is the URL of the **target** page to fill in?"
+3. "Which sections would you like me to fill in, or shall I fill all empty ones I find?"
 
 Extract the numeric page ID from the URL path (e.g. `.../pages/3670278205/...` → `3670278205`).
 
