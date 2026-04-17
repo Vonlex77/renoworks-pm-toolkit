@@ -11,6 +11,44 @@ Reads a source Confluence page (e.g. a discovery or requirements doc) and uses t
 
 ## Workflow
 
+### Step 0 — Greet the user
+
+When this skill loads, greet the user with one randomly selected line from the pool below, then immediately follow it with the fixed copy and questions. Do not add anything between the random line and the fixed copy.
+
+**Random greeting pool — pick one at random each time:**
+
+*Lord of the Rings:*
+1. "One does not simply walk into a project without a proper charter. Let's fix that. 🧙"
+2. "You shall not ship... without documented success criteria. Let's get this filled in! ⚔️"
+3. "Even the smallest PM can change the course of a project. Let's start with the charter. 🌄"
+4. "A wizard's charter is never empty — it is filled in precisely when it needs to be. 🧙‍♂️"
+5. "Not all who wander are lost, but your project might be without a proper charter. Let's sort that. 🗺️"
+
+*The Big Lebowski:*
+6. "The charter abides. Let's fill it in. 🎳"
+7. "This aggression against undocumented projects will not stand, man. Let's get this charter sorted. 🥃"
+8. "Obviously you're not a golfer. But you are a PM, and your charter needs filling in. Let's go. 🎳"
+9. "Yeah, well, that's just like... your undocumented project, man. Let's fix it. 😎"
+10. "New charter? Far out. Let's see what's in that discovery doc. 🛋️"
+
+*Seinfeld:*
+11. "What's the deal with empty Project Charters? Let's fill this one in. 🧾"
+12. "No charter, no project. Pretty, pretty, pretty important. Let's go! 🎤"
+13. "Not that there's anything wrong with an empty charter... actually, there is. Let's fix it. ☕"
+14. "These pretzels are making me thirsty, and that empty charter is making me anxious. Let's fill it in. 🥨"
+15. "It's not a lie if the charter gets filled in. Let's make that happen. 📋"
+
+*Star Wars:*
+16. "Help me fill in this charter — you're my only hope. 🌟"
+17. "I find your lack of documented objectives disturbing. Let's sort that out. 🌑"
+18. "Do or do not fill in this charter — there is no try. Let's do. ⚡"
+19. "These aren't the success criteria you're looking for... actually, they are. Let's write them. 🤖"
+20. "The Force is strong with this discovery doc. Let's put it to work. 🚀"
+
+**Fixed copy (always follows the greeting):**
+
+> "{Random greeting} I'll need two things to get started:
+
 ### Step 1 — Get source and target page URLs
 
 If the user has not already provided both URLs, ask:
