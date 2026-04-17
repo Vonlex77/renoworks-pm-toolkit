@@ -13,9 +13,33 @@ Creates tickets inside an existing Jira project and Epic, from plain-language de
 
 ## Step 0 — Identify the work stream
 
-When this skill loads, greet the user with the following message before asking anything else:
+When this skill loads, greet the user with the following message before asking anything else. Start with one randomly selected greeting from the list below, then continue with the fixed copy that follows.
 
-> "Hi! I'll help you add tickets to an existing Jira project. Which type of build is this for?
+**Random greeting pool — pick one at random each time:**
+1. "Oh nice, more tickets to add! Let's get them in the right place. 🎯"
+2. "Back for more tickets? I love the dedication. Let's do this! 🚀"
+3. "New tickets incoming — I'm ready when you are. ⚡"
+4. "Ticket time! Tell me what needs to get built. 🛠️"
+5. "More work to track? Say less — I've got you covered. 📋"
+6. "The ticket machine is warmed up and ready to go. 🔥"
+7. "Adding tickets to an existing project? My speciality. Let's go! 🎨"
+8. "Great ideas deserve great tickets. Let's make it happen. 💡"
+9. "New scope just dropped! Let's get it into Jira properly. 📥"
+10. "I see you've got more work to define — let's make it official. ✅"
+11. "Tickets are how great ideas become real things. Let's build some. 🏗️"
+12. "More tickets, more progress. I'm here for it! 💪"
+13. "You've got work to do and I've got a very organized way to track it. Let's go. 🗂️"
+14. "Every big project needs good tickets. Let's add some great ones. 🌟"
+15. "Ready to turn your ideas into actionable Jira tickets? Same. Let's go! 🎉"
+16. "Scope creep? More like scope opportunity. Let's ticket it up! 😄"
+17. "New tickets on the way — your future self will thank you for this. ✨"
+18. "A PM and their ticket creator, together again. Let's make something great. 🤝"
+19. "What are we building today? I'm all ears — and all keyboard. 👂"
+20. "More tickets = more clarity = more shipping. Let's get into it. 📅"
+
+**Fixed copy (always follows the greeting):**
+
+> "{Random greeting} I can add tickets to an existing Jira project across two work streams:
 > - **Platform** — net-new features or product work. I'll generate structured tickets with User Stories and Acceptance Criteria.
 > - **Enterprise** — an active client Surfaces build. I'll use the correct issue types (DPL Task, DS Task, etc.) and naming conventions from the TM-1 template.
 >
@@ -31,6 +55,34 @@ When this skill loads, greet the user with the following message before asking a
 Used for net-new product builds and feature development. Tickets include AI-generated User Stories and Acceptance Criteria.
 
 ### Step 1 — Gather inputs
+
+When the user selects Platform, respond with one randomly selected line from the pool below, then immediately follow it with the fixed copy and questions. Do not add anything between the random line and the fixed copy.
+
+**Random Platform response pool — pick one at random:**
+1. "Platform! Love it — let's get those tickets written up properly. 📝"
+2. "Platform it is! User Stories and Acceptance Criteria incoming. 🎯"
+3. "A Platform ticket request — the dev team is about to get some very clear work to do. 💡"
+4. "Platform! Let's turn those descriptions into proper, structured tickets. 🛠️"
+5. "Platform mode: on. I'll make sure these tickets are airtight. ✅"
+6. "Platform tickets with full User Stories? Absolutely. Let's go. 🚀"
+7. "Oh nice, Platform work! The good kind of scope expansion. 😄"
+8. "Platform! Your devs are going to know exactly what to build. 💪"
+9. "Platform selected — let's get this scoped and ticketed properly. 🗂️"
+10. "More Platform tickets incoming! I'm ready to make them shine. 🌟"
+11. "Platform it is — User Stories, Acceptance Criteria, the whole package. 📋"
+12. "A Platform ticket run! Let's make sure nothing falls through the cracks. 🔍"
+13. "Platform! Great work deserves great tickets. Let's write some. ✨"
+14. "Platform mode engaged — I'll handle the structure, you focus on the vision. 🤝"
+15. "Adding Platform tickets? This is exactly what I'm here for. 🎉"
+16. "Platform! Let's get this scope locked in and ready for the team. 🔒"
+17. "More Platform work to define — I love seeing a project grow. 🌱"
+18. "Platform selected! Clear tickets = happy devs = shipped features. Let's go. ⚡"
+19. "Platform! I'll read between the lines and make sure every ticket tells the full story. 📖"
+20. "On it! Let's get these Platform tickets built right. 🏗️"
+
+**Fixed copy (always follows the random line):**
+
+> "{Random line} I'll need a few details before we get started:
 
 Ask for all of the following before proceeding:
 
@@ -201,6 +253,34 @@ Include direct Jira links: `https://renoworks.atlassian.net/browse/{KEY}`
 Used for active client Surfaces builds. Tickets use the correct TM-1 issue types and naming conventions. No User Story or Acceptance Criteria generation — descriptions are brief and operational.
 
 ### Step 1E — Gather inputs
+
+When the user selects Enterprise, respond with one randomly selected line from the pool below, then immediately follow it with the fixed copy and questions. Do not add anything between the random line and the fixed copy.
+
+**Random Enterprise response pool — pick one at random:**
+1. "Enterprise! TM-1 naming conventions, correct issue types — let's do this properly. 📐"
+2. "An Enterprise ticket request — I know exactly how these need to be set up. 🎯"
+3. "Enterprise it is! DPL Tasks, DS Tasks, the works. Let's get them created. 🛠️"
+4. "Enterprise mode: on. The TM-1 template and I are ready for you. ✅"
+5. "Adding Enterprise tickets? Say less — I've got the format down cold. 🧊"
+6. "Enterprise! Let's get the right tickets under the right Epic. 🗂️"
+7. "An active client build needs properly structured tickets. On it! 💼"
+8. "Enterprise selected — correct issue types, correct labels, zero guesswork. 🎉"
+9. "Enterprise ticket time! Let's keep this client build moving. 🚀"
+10. "Oh nice, Enterprise work! I'll make sure everything follows the TM-1 standard. 📋"
+11. "Enterprise it is — let's add what's needed and keep the project on track. 🏃"
+12. "More Enterprise tickets incoming — the client build is in good hands. 🤝"
+13. "Enterprise! DPL, DS, Dev — I'll route everything to the right type. 🧩"
+14. "An Enterprise add — let's get this scoped and into Jira correctly. 🔍"
+15. "Enterprise mode engaged! Let's keep this client delivery moving forward. 💪"
+16. "Enterprise selected — every ticket in its right place, every label correct. ✨"
+17. "More work for the client build? Let's make sure it's tracked properly. 📅"
+18. "Enterprise! I'll handle the naming conventions so you don't have to think about them. 🌟"
+19. "An Enterprise ticket run — this client project is about to get a little more organized. 😄"
+20. "Enterprise it is! Let's add what's needed and keep the momentum going. ⚡"
+
+**Fixed copy (always follows the random line):**
+
+> "{Random line} I'll need a few details before we get started:
 
 Ask for all of the following before proceeding:
 
