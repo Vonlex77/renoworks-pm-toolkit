@@ -1,15 +1,34 @@
 ---
 name: jira-project-setup
-description: Set up a structured Jira initiative inside an existing project (RW2, S4, MAINT, etc.) by creating Epics, Tasks, and Release issues. Use this skill when the user wants to create a new Jira project, initiative, or feature set — including when they provide a Confluence page with project details, or when they want to create Epics/Tasks/Releases in Jira. Automatically generates User Story, Expected Behaviour, and QA Acceptance Criteria for each Task. Checks for existing Epics to avoid duplicates.
+description: Set up a structured Jira initiative inside an existing project (RW2, S4, MAINT, etc.) by creating Epics, Tasks, and Release issues. Supports two work streams — Platform (net-new features/products) and Enterprise (client Surfaces implementations). Use this skill when the user wants to create a new Jira project, initiative, or feature set — including when they provide a Confluence page with project details, or when they want to create Epics/Tasks/Releases in Jira. Automatically generates User Story, Expected Behaviour, and QA Acceptance Criteria for Platform tasks. Uses the standard TM-1 Jira template for Enterprise builds.
 ---
 
 # Jira Project Setup
 
-Sets up a structured Jira initiative by reading a Confluence brief, then interactively creating Epics, Tasks (with AI-generated User Story, Expected Behaviour, and QA Acceptance Criteria), and Release issues inside an existing Jira project.
+Sets up a structured Jira initiative for either a **Platform** project (net-new feature or product build) or an **Enterprise** project (client Surfaces implementation). Branches into the appropriate workflow based on the PM's answer to the first question.
 
 **CloudId:** `renoworks.atlassian.net`
 
-## Workflow
+---
+
+## Step 0 — Identify the work stream
+
+When this skill loads, greet the user with the following message before asking anything else:
+
+> "Hi! I'll help you set up a new Jira project. I can handle two types of builds:
+> - **Platform** — net-new features, product improvements, or client feature requests. I'll read your Project Charter from Confluence and generate structured tickets with User Stories and QA Acceptance Criteria.
+> - **Enterprise** — setting up Surfaces for a new enterprise client. I'll use the standard TM-1 ticket template and walk you through which tickets apply for this build.
+>
+> Is this an **Enterprise** or **Platform** project?"
+
+- If **Platform** → follow the [Platform Path](#platform-path) below.
+- If **Enterprise** → follow the [Enterprise Path](#enterprise-path) below.
+
+---
+
+## Platform Path
+
+Used for net-new product builds, feature development, or platform improvements. Tasks are derived from a Confluence Project Charter and include AI-generated User Story, Expected Behaviour, and QA Acceptance Criteria.
 
 ### Step 1 — Get the Confluence page, team composition, and scheduling inputs
 
@@ -262,15 +281,505 @@ Tailor the specifics to the actual project — mention the delivery phases and t
 
 Use the actual task counts, team names, and total hours from the session. Format the total as "~Xh".
 
-Format (do not copy verbatim — tailor to actual project phases, team structure, and task counts):
+---
 
-`{Initiative Name} - Project Charter - {URL}` → 2–3 sentences: what the charter is, what it covers (building rationale, success criteria, risks, delivery phases, RACI), and that it lets anyone get up to speed without a kickoff.
+## Enterprise Path
 
-`{Initiative Name} - Jira Project - {Epic URL}` → 2–3 sentences: reference the charter as scope source, describe tasks created per team and what each covers, state total estimated hours as `~Xh`.
+Used for enterprise client Surfaces implementations. The ticket structure follows the official TM-1 Jira template and is consistent across every client build. Tasks are templated — no User Story or QA Acceptance Criteria generation is needed.
+
+The standard workflow is: create all tickets from the template → transition any out-of-scope tickets to **Archived** status so they remain accessible if needed later.
+
+### Step 1E — Gather Enterprise inputs
+
+Ask for all of the following before doing anything else:
+
+1. "What is the **client name**? (e.g. `ProDoor Systems`)"
+2. "What is the **SOW reference number**? (e.g. `SOW-PRODOOR-002`)"
+3. "Is this a **New Build** or an **Upgrade** for this client?"
+4. "Please provide the **App Configuration Confluence page URL**. This is the page that describes the client's app setup, branding, product catalogue, and configuration requirements."
+5. "Please provide the **Basecamp project folder URL** for this client."
+6. "Is there a **Figma design link**? (Optional — include if branding mock-ups or UI designs exist)"
+7. "**If CRM integration is needed**: what CRM is being integrated? (e.g. Salesforce, HubSpot — leave blank if not applicable)"
+8. "Which **Jira project key** should these tickets be created under? (e.g. `S4`)"
+9. "What is the **team composition**? (e.g. 1 DevOps, 1 Backend, 1 DPL artist, 1 SP masker — used to build the workback schedule)"
+10. "What is the **project start date** (the first day work can begin)?"
+11. "Is there a **target delivery date** (hard deadline)? If so, I'll flag any schedule risk."
+
+Required: all except Figma, CRM name, and target delivery date. Read the App Configuration Confluence page using `mcp__claude_ai_Atlassian__getConfluencePage` to inform task descriptions.
+
+### Step 2E — Confirm ticket set and plan
+
+Present the full template ticket list and ask the PM to confirm scope in a single round. Tickets marked **[Archived in template]** are off by default — include them only if the PM explicitly confirms they're needed. All others are on by default.
+
+```
+Enterprise Template Tickets — [Client Name] [SOW-REF]
+
+EPIC
+  [✓] [Client Name] [SOW-REF]  (Epic)
+
+DEV
+  [✓] DevOps - Vanity URL  (Story)
+  [✓] Backend - CRM Integration  (Story)  ← CRM: [name from Step 1E, or "TBD" if not provided]
+
+DPL
+  [✓] DPL - [PROJECT SET UP] Asset Review & Requirements  (DPL Task)
+
+SAMPLE PHOTO
+  [✓] SP - Mask and deploy new sample images  (DS Task)  ← How many exterior scenes?
+  [✓] SP - Prepare shadow files for new sample images  (DS Task)
+  [✓] SP - Implement sample photo tabs  (DS Task)
+  [✓] SP - Update and deploy repo images  (DS Task)
+  [✓] SP - Hotspot positioning  (DS Task)
+
+RELEASE
+  [✓] Release [Client Name] New Build OR Upgrade  (Deployment Release)
+
+--- Archived in template (include only if in scope for this build) ---
+  [ ] Initial Build - DSA Analytics Setup  (Task)
+  [ ] Design Team - Create branding mock-ups  (Task)
+  [ ] Backend - 3D Product Viewer Deployment  (Task)
+  [ ] Frontend - Complete all S4 Configurations and Styling  (Task)
+  [ ] Projects - Configure S4 App in Configuration Portal  (Task)
+  [ ] Backend - Configure New Build S4 App  (Task)
+```
+
+Ask: "Please confirm which tickets are in scope and how many exterior sample scenes SP will need to mask. If any of the archived tickets should be included, let me know. I'll show the full plan with estimates before creating anything."
+
+Once the PM responds, generate the full plan summary using the confirmed ticket set and the default estimates from Step 9E, then present it:
+
+```
+Project: {KEY}
+Epic (1): [Client Name] [SOW-REF]
+
+Tickets to create — Active ({N}):
+  Story     | DevOps - Vanity URL                                    | 4h
+  Story     | Backend - CRM Integration                              | 16h
+  DPL Task  | DPL - [PROJECT SET UP] Asset Review & Requirements     | 4h
+  DS Task   | SP - Mask and deploy new sample images ({N} scenes)    | {N×4}h
+  DS Task   | SP - Prepare shadow files for new sample images        | 4h
+  DS Task   | SP - Implement sample photo tabs                       | 4h
+  DS Task   | SP - Update and deploy repo images                     | 4h
+  DS Task   | SP - Hotspot positioning                               | 4h
+  Release   | Release [Client Name] New Build                        | —
+
+Tickets to create — Archived ({M}):
+  Task      | [any archived-by-default tickets included]
+
+Total estimated effort: ~Xh
+Schedule: {start date} → ~{projected end date}
+```
+
+Ask: "Does this look right? Any changes before I create the tickets?"
+
+Wait for explicit confirmation before continuing.
+
+### Step 3E — Fetch project metadata
+
+Call `mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata` with the project key to confirm available issue types. For Enterprise projects, confirm availability of:
+- `DPL Task` — Digital Product Library work
+- `DS Task` — Design Services / Sample Photo work
+- `Story` — DevOps and Backend/Frontend setup
+- `Task` — standalone dev or design tasks
+- `Deployment Release` — release milestone
+
+Run all of the following calls in parallel:
+- `mcp__claude_ai_Atlassian__getJiraIssueTypeMetaWithFields` for each issue type in use — to determine required fields and Epic linking method
+- `mcp__claude_ai_Atlassian__getTransitionsForJiraIssue` on any existing issue in the target project — to find the transition ID for the **Archived** status (needed in Step 6E)
+
+### Step 4E — Check for existing Epic
+
+Search for an existing Epic to avoid duplicates:
+
+```jql
+project = {KEY} AND issuetype = Epic AND summary ~ "{Client Name}" ORDER BY created DESC
+```
+
+- If a match is found: confirm with the PM whether to reuse it or create a new one.
+- If not found: create using `mcp__claude_ai_Atlassian__createJiraIssue`.
+
+**Epic description (Jira wiki markup):**
+```
+This is an epic for creation of site: `[app-name derived from App Config page]`
+
+Related documentation:
+
+* Confluence Page: [Client Name - App Configuration|{Confluence App Config URL}]
+* Basecamp Folder: [{Basecamp URL}|{Basecamp URL}]
+
+*TO-DO*:
+
+# Fill in site name and documentation.
+# Fill in sub-ticket details for all sub-tickets. (if applicable)
+# Mark tickets not needed as "Not Accepted".
+# Set End-Date for ticket when DOD is sent for project closure.
+```
+
+Do not include a `labels` field on the Epic (Enterprise Epics do not use the WBS label).
+
+### Step 5E — Create all tickets
+
+Create all confirmed tickets using `mcp__claude_ai_Atlassian__createJiraIssue`. Run parallel creation calls for tickets with no dependencies between them. Use the exact descriptions below — replace placeholders in `[brackets]` with actual client values from Step 1E and the App Config Confluence page.
+
+**Epic link:** use `parent` field (team-managed) or `customfield_10014` (company-managed) based on Step 3E metadata.
+
+Do not include `labels: ["WBS"]` on Enterprise tickets unless the PM explicitly requests it. Use the per-ticket labels defined below.
+
+---
+
+#### DevOps - Vanity URL (Story) — label: `Dev-Backend`
+
+```
+Create a vanity URL (URL to be confirmed by `[client-name]`).
+
+URL: `visualizer.[app-name].com`
+
+Vanity URLs
+
+{code}
+visualizer.[app-name].com => [app-name].renoworks.com
+visualizer-api.[app-name].com => api.renoworks.com
+{code}
+
+[Setting up Vanity URLs|https://renoworks.atlassian.net/wiki/spaces/S3/pages/1770291250/Setting+up+Vanity+URLs]
+
+Add the API vanity domain to the "connect-src" and "img-src" CSP directives in default.js in surfaces config
+```
+
+---
+
+#### Backend - CRM Integration (Story) — label: `Dev-Frontend`
+
+```
+`[CRM Name]` Integration is required for `[app-name]`. ← Fill these out before assigning.
+
+Link to CRM confluence page: INSERT LINK HERE PRIOR TO ASSIGNING OUT (Should be provided by [TM-44|https://renoworks.atlassian.net/browse/TM-44])
+
+Add to Documentation: [CRM Integration Platform|https://renoworks.atlassian.net/wiki/spaces/COR/pages/318079092/CRM+Integration+Platform]
+
+Back-End Documentation (Reference): [CRM platform|https://renoworks.atlassian.net/wiki/spaces/BAC/pages/315064549/CRM+platform], [Backend - Steps for CRM Integration|https://renoworks.atlassian.net/wiki/spaces/BAC/pages/1720680515/Backend+-+Steps+for+CRM+Integration]
+
+Back-End Package: [https://bitbucket.org/renoworks/framework/src/master/src/com/renoworks/framework/objects/crm/|https://bitbucket.org/renoworks/framework/src/master/src/com/renoworks/framework/objects/crm/]
+```
+
+---
+
+#### DPL - [PROJECT SET UP] Asset Review & Requirements (DPL Task) — label: `DPL`
+
+```
+[{Basecamp URL}|{Basecamp URL}]
+
+h3. ASSET LIST ---
+
+_*Instructions:*_
+
+* _*Assign to Project Coordinator once asset list is provided.*_
+* _*Provide Asset List and update the date in the log once the list is provided. This asset sheet may also be provided as an external google sheet.*_
+* _*Ensure the use of the following statuses:*_
+  *[ PENDING ]* *[ RECEIVED ]* *[ CLARIFICATION NEEDED ]*
+
+* *Asset* *[ PENDING ]*
+** Manufacturer & product ID
+
+* *Asset* *[ CLARIFICATION NEEDED ]*
+* *Asset* *[ RECEIVED ]*
+
+----
+
+h3. QUESTIONS & CLARIFICATIONS
+
+_*Instructions*_
+
+* _*Ensure the use of the following statuses:*_
+  *[ PENDING ]* *[ RECEIVED ]* *[ CLARIFICATION NEEDED ]*
+* _*Use the format defined below*_
+
+* _Question:_ *[ PENDING ]* *[ RECEIVED ]* *[ CLARIFICATION NEEDED ]*
+** Answer:
+
+----
+
+h3. NOTES
+
+* _Additional Notes For A Project_
+
+----
+
+h3. LOG
+
+|| *Project Set Up Date* || *Date Asset List Provided* || *Date Assets Received* || *Date Assets Reviewed* || *Date Assets Approved* ||
+| {today's date} | | | | |
+```
+
+---
+
+#### SP - Mask and deploy new sample images (DS Task) — label: `SampleProjects`
+
+```
+Mask new images found in client basecamp folder. Shadow files will need to be prepared. Supergrouping as needed.
+
+Single source of truth is app configuration page (linked in main epic)
+
+Layer names are displayed in layer mapping table
+```
+
+---
+
+#### SP - Prepare shadow files for new sample images (DS Task) — label: `SampleProjects`
+
+```
+Prepare shadow files for new sample images found in client basecamp folder. Ensure these are uploaded to the correct GUID and set opacity.
+```
+
+---
+
+#### SP - Implement sample photo tabs (DS Task) — label: `SampleProjects`
+
+*(No description — leave blank, matching template)*
+
+---
+
+#### SP - Update and deploy repo images (DS Task) — label: `SampleProjects`
+
+```
+Selected repo images found on app configuration page, linked in main epic
+
+Please update xml to align with the appropriate layer names as referenced in the layer mapping table.
+```
+
+---
+
+#### SP - Hotspot positioning (DS Task) — label: `SampleProjects`
+
+*(No description — leave blank, matching template)*
+
+---
+
+#### Release [Client Name] New Build OR Upgrade (Deployment Release) — no label
+
+Use `Release [Client Name] New Build` or `Release [Client Name] Upgrade` based on the PM's answer from Step 1E.
+
+```
+h2. Deployment task
+
+# Execute a *[DEV/SP/DPL]** deployment of the App to the requested Server (see status).
+# Check [Deployment Specific Instructions|https://renoworks.atlassian.net/wiki/spaces/S3/pages/317390995/Deployments+Specific+Instructions] (if Applicable).
+# Run the app through the automated/manual testing to confirm that the site is ready for testing.
+# For releases to a Production environment only - Before executing the deployment script, please notify DS team to ensure that maskers are not actively using the app. This is not applicable if the App uses the Scene Editor.
+
+----
+
+h2. QA task
+
+# Execution of [Deployment Release QA Checklist|https://renoworks.atlassian.net/wiki/spaces/QA1/pages/313851932/Deployment+Release+QA+Checklist]
+# Confirmation that App satisfies all requested verifications on the requested environment
+
+*Exceptions*
+
+* DS / DPL tickets when there is no explicit request
+* Known Issues according to App backlog / Core backlog
+
+----
+
+*Purpose*: Implementation of baseline scope
+
+----
+
+*Release setup:**
+# This release has to be assigned to the team who is responsible of the SOW/CR.
+# If required work from other teams, a subrelease task has to be setup properly.
+# Please ensure that all team-specific blockers are linked to this subrelease, including non-team-specific tickets which block team tasks.
+```
+
+---
+
+#### Archived-by-default tickets
+
+For each ticket confirmed as in scope from the "Archived in template" list, create it with the description below:
+
+**Initial Build - DSA Analytics Setup (Task) — no label**
+```
+The sub tasks within this ticket need to be completed by the DSA team before the APP goes live.
+
+*Go Live Date:* TBD
+
+h2. Ticket Details
+
+*Prod URL / Staging URL:*
+
+*Confluence:*
+```
+
+**Design Team - Create branding mock-ups (Task) — no label**
+
+Fill in the Basecamp link and target completion date from Step 1E context. Leave feature toggles (ON/OFF) as written — the design team fills these in:
+```
+*Branding Assets & Background image:* [{Basecamp URL}|{Basecamp URL}]
+
+*Particularities:*
+
+* Version 4.20
+* New Toolbar
+* React Landing page
+* Legacy Link ON/OFF
+* Sample Homes ON/OFF (Button copy: "Sample Gallery")
+* AI ON/OFF (Button copy: "AI Instant Design")
+* DIY ON/OFF (Button copy: "Upload Home") _*only enabled if separate access from AI is requested in the SOW_
+* Design Services ON/OFF (Button copy: "Design Services")
+* Get Started Page ON/OFF (Button copy: "Design Your Home") _*i.e. as seen in Ply Gem_
+* Header CTA ON/OFF (Button copy: TBD)
+
+Please aim to have this completed by [target date from Step 1E, or XX 202X if not specified]. Let me know if you have any questions.
+```
+
+**Backend - 3D Product Viewer Deployment (Task) — no label**
+```
+_BA to add information when defining DPL components post asset collection._
+```
+
+**Frontend - Complete all S4 Configurations and Styling (Task) — no label**
+```
+Complete all S4 configurations and styling in alignment with the app configuration page: [Client Name - App Configuration|{Confluence App Config URL}]
+```
+
+**Projects - Configure S4 App in Configuration Portal (Task) — no label**
+```
+Configure S4 App in Configuration Portal
+```
+
+**Backend - Configure New Build S4 App (Task) — no label**
+```
+Configure a new build S4 visualizer in alignment with the app configuration page [Client Name - App Configuration|{Confluence App Config URL}]
+
+This includes any applicable:
+
+* Implementing AI mapping
+* Assign a product manufacturer
+```
+
+### Step 6E — Transition out-of-scope tickets to Archived
+
+For any tickets that were created but are **not** in scope for this build (i.e., those the PM indicated are not needed), transition them to the **Archived** status using `mcp__claude_ai_Atlassian__transitionJiraIssue` with the Archived transition ID found in Step 3E.
+
+Run all archive transitions in parallel for efficiency.
+
+### Step 7E — Link all tickets to the Release
+
+Link every active (non-Archived) ticket to the Release using `mcp__claude_ai_Atlassian__createIssueLink`:
+- `inwardIssue`: the ticket key (the blocker)
+- `outwardIssue`: the Release key (the blocked issue)
+- `linkType`: `Blocker`
+
+Create all links in parallel for efficiency.
+
+### Step 8E — Standard dependency map
+
+For Enterprise projects, present this standard dependency map for PM confirmation before creating links. These are inter-ticket dependencies only — ticket-to-Release links were already created in Step 7E and must not be duplicated here.
+
+```
+Dependency Map:
+  DPL Asset Review → blocks → [all other DPL tickets]
+    Reason: Asset requirements must be confirmed before DPL production work begins
+  SP - Mask and deploy → blocks → SP - Prepare shadow files
+    Reason: Shadow files are prepared from the same images being masked
+  SP - Prepare shadow files → blocks → SP - Update and deploy repo images
+    Reason: Repo images depend on shadow files being ready
+```
+
+Ask: "Does this dependency map look correct for this project? Any additions or removals?"
+
+Wait for explicit confirmation, then create links using `mcp__claude_ai_Atlassian__createIssueLink` with `linkType: Blocker`. Do not re-create any links already created in Step 7E.
+
+### Step 9E — Build workback schedule and set dates
+
+#### 9Ea — Scheduling rules
+
+Use the project start date and target delivery date from Step 1E.
+
+Use these default estimates for each ticket unless the PM provides alternatives:
+
+| Ticket | Team | Default Estimate |
+|--------|------|-----------------|
+| DevOps - Vanity URL | DevOps | 4h |
+| Backend - CRM Integration | Backend | 16h |
+| DPL - Asset Review & Requirements | DPL | 4h |
+| SP - Mask and deploy new sample images | SP | 8h (adjust based on scene count) |
+| SP - Prepare shadow files | SP | 4h |
+| SP - Implement sample photo tabs | SP | 4h |
+| SP - Update and deploy repo images | SP | 4h |
+| SP - Hotspot positioning | SP | 4h |
+| Initial Build - DSA Analytics Setup | DSA | 8h |
+| Design Team - Create branding mock-ups | Design | 8h |
+| Backend - 3D Product Viewer Deployment | Backend | 8h |
+| Frontend - Complete all S4 Configurations | Frontend | 16h |
+| Projects - Configure S4 App | Projects | 8h |
+| Backend - Configure New Build S4 App | Backend | 16h |
+
+Apply the same scheduling rules as the Platform path:
+- Working days only (Mon–Fri), 6h per day per developer
+- Resource-constrained: same-team tasks are sequential
+- Cross-team tasks can overlap if no dependency blocks them
+- Duration = `ceil(estimate_hours / 6)` working days, rounded up
+
+#### 9Eb — Present the schedule for confirmation
+
+Output a schedule table before setting any dates. Columns: Key | Summary | Type | Est | Start | Due | Depends On.
+
+If a target delivery date was provided and the calculated end date exceeds it, flag the risk:
+> "⚠ Schedule risk: projected completion is YYYY-MM-DD, which is X days past the target of YYYY-MM-DD."
+
+Ask: "Does this schedule look correct? Any adjustments before I apply the dates to Jira?"
+
+Wait for explicit confirmation.
+
+#### 9Ec — Apply dates to Jira
+
+For each active ticket, call `mcp__claude_ai_Atlassian__editJiraIssue` to set:
+- `startDate` — calculated start date in `YYYY-MM-DD` format
+- `duedate` — calculated due date in `YYYY-MM-DD` format
+
+Skip date-setting on any tickets transitioned to Archived.
+
+> **Known limitation:** `startDate` may be locked in company-managed projects. Notify the user if it fails.
+
+Apply all date updates in parallel for efficiency.
+
+### Step 10E — Print summary
+
+Output a table of all created issues:
+
+| Type | Key | Summary | Status | Estimate | Start | Due |
+|------|-----|---------|--------|----------|-------|-----|
+| Epic | S4-xxx | [Client Name] [SOW-REF] | To Do | — | — | — |
+| Story | S4-xxx | DevOps - Vanity URL | To Do | 4h | ... | ... |
+| DPL Task | S4-xxx | DPL - [PROJECT SET UP] Asset Review & Requirements | To Do | 4h | ... | ... |
+| Task | S4-xxx | Design Team - Create branding mock-ups | Archived | — | — | — |
+| ... | | | | | | |
+| Release | S4-xxx | Release [Client Name] New Build | To Do | — | ... | ... |
+
+Include direct Jira links where possible: `https://renoworks.atlassian.net/browse/{KEY}`
+
+#### Teams Channel Summary
+
+After the table, generate two ready-to-paste paragraphs for posting in the Teams project channel.
+
+**Format:**
+```
+[Client Name] [SOW-REF] - App Configuration - {Confluence App Config URL}
+{App Config paragraph}
+
+[Client Name] [SOW-REF] - Jira Epic - {Epic URL}
+{Jira Epic paragraph}
+```
+
+**App Config paragraph** — 2–3 sentences: what the App Config page is, what it covers (product catalogue, branding, configuration requirements, sample scenes), and that it's the single source of truth for all implementation work.
+
+**Jira Epic paragraph** — 2–3 sentences: reference the SOW and App Config as scope sources, describe the ticket breakdown (how many Dev/DPL/SP tickets are active), and state the total estimated effort as `~Xh`.
+
+---
 
 ## Notes
 
 - Always confirm with the user before creating any issues
-- If a Release issue type does not exist in the project, inform the user and ask how to proceed
+- If a required issue type (e.g. DPL Task, DS Task) does not exist in the target project, inform the user and ask how to proceed
 - If the Confluence page is ambiguous, ask clarifying questions rather than guessing
 - Prefer creating fewer, well-defined issues over many vague ones
