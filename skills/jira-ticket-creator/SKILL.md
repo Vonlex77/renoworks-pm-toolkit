@@ -273,15 +273,15 @@ Enterprise summaries do **not** follow the `[TEAM] - [PRODUCT] - [SUMMARY]` Plat
 
 #### Labels
 
-| Issue type | Label |
-|------------|-------|
-| `DPL Task` | `DPL` |
-| `DPL Defect` | `DPL` |
-| `DS Task` | `SampleProjects` |
-| `Task` | None by default — add `Dev-Backend` or `Dev-Frontend` if the work is clearly one or the other |
-| `Defect` | None by default |
+| Issue type | Labels |
+|------------|--------|
+| `DPL Task` | `WBS`, `DPL` |
+| `DPL Defect` | `WBS`, `DPL` |
+| `DS Task` | `WBS`, `SampleProjects` |
+| `Task` | `WBS` — also add `Dev-Backend` or `Dev-Frontend` if the work is clearly one or the other |
+| `Defect` | `WBS` |
 
-Do **not** add `WBS` to Enterprise tickets.
+Always include `WBS` on every Enterprise ticket.
 
 #### Description Format
 
@@ -340,7 +340,7 @@ Create all tickets in parallel using `mcp__claude_ai_Atlassian__createJiraIssue`
 - `summary`: formatted per Enterprise naming convention
 - `description`: brief operational description per Step 4E format
 - `assignee`: account ID resolved in Step 3E (if resolved)
-- `labels`: per-ticket label from Step 4E (if any) — do **not** include `WBS`
+- `labels`: always include `WBS`, plus the per-ticket label from Step 4E
 - Epic link: use `parent` (team-managed) or `customfield_10014` (company-managed) per Step 3E metadata
 - `startDate`: in `YYYY-MM-DD` format (if provided)
 - `duedate`: in `YYYY-MM-DD` format (if provided)
