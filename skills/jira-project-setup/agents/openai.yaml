@@ -1,0 +1,3 @@
+display_name: Jira Project Setup
+short_description: Set up Epics, Tasks, and Releases in Jira from a Confluence project brief
+default_prompt: Set up a new Jira project initiative

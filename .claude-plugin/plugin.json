@@ -1,0 +1,12 @@
+{
+  "name": "renoworks-pm-toolkit",
+  "version": "1.0.0",
+  "description": "Jira project setup, ticket creation, and project charter skills for the Renoworks PM team",
+  "author": {
+    "name": "Chad Kolesnik",
+    "email": "chad.kolesnik@renoworks.com"
+  },
+  "homepage": "https://github.com/Vonlex77/renoworks-pm-toolkit",
+  "repository": "https://github.com/Vonlex77/renoworks-pm-toolkit",
+  "keywords": ["project-management", "jira", "confluence", "renoworks"]
+}

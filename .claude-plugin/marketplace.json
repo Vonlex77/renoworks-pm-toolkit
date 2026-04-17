@@ -1,0 +1,15 @@
+{
+  "name": "renoworks-marketplace",
+  "owner": {
+    "name": "Chad Kolesnik",
+    "email": "chad.kolesnik@renoworks.com"
+  },
+  "plugins": [
+    {
+      "name": "renoworks-pm-toolkit",
+      "source": "./",
+      "description": "Jira project setup, ticket creation, and project charter skills for the Renoworks PM team",
+      "version": "1.0.0"
+    }
+  ]
+}
