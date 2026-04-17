@@ -414,7 +414,7 @@ Related documentation:
 # Set End-Date for ticket when DOD is sent for project closure.
 ```
 
-Do not include a `labels` field on the Epic (Enterprise Epics do not use the WBS label).
+Include `labels: ["WBS"]` on the Epic.
 
 ### Step 5E — Create all tickets
 
