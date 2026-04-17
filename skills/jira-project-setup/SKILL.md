@@ -422,7 +422,7 @@ Create all confirmed tickets using `mcp__claude_ai_Atlassian__createJiraIssue`. 
 
 **Epic link:** use `parent` field (team-managed) or `customfield_10014` (company-managed) based on Step 3E metadata.
 
-Do not include `labels: ["WBS"]` on Enterprise tickets unless the PM explicitly requests it. Use the per-ticket labels defined below.
+Always include `WBS` on every Enterprise ticket, plus the per-ticket label defined below.
 
 ---
 
@@ -554,7 +554,7 @@ Please update xml to align with the appropriate layer names as referenced in the
 
 ---
 
-#### Release [Client Name] New Build OR Upgrade (Deployment Release) — no label
+#### Release [Client Name] New Build OR Upgrade (Deployment Release) — label: `WBS`
 
 Use `Release [Client Name] New Build` or `Release [Client Name] Upgrade` based on the PM's answer from Step 1E.
 
@@ -596,7 +596,7 @@ h2. QA task
 
 For each ticket confirmed as in scope from the "Archived in template" list, create it with the description below:
 
-**Initial Build - DSA Analytics Setup (Task) — no label**
+**Initial Build - DSA Analytics Setup (Task) — label: `WBS`**
 ```
 The sub tasks within this ticket need to be completed by the DSA team before the APP goes live.
 
@@ -609,7 +609,7 @@ h2. Ticket Details
 *Confluence:*
 ```
 
-**Design Team - Create branding mock-ups (Task) — no label**
+**Design Team - Create branding mock-ups (Task) — label: `WBS`**
 
 Fill in the Basecamp link and target completion date from Step 1E context. Leave feature toggles (ON/OFF) as written — the design team fills these in:
 ```
@@ -631,22 +631,22 @@ Fill in the Basecamp link and target completion date from Step 1E context. Leave
 Please aim to have this completed by [target date from Step 1E, or XX 202X if not specified]. Let me know if you have any questions.
 ```
 
-**Backend - 3D Product Viewer Deployment (Task) — no label**
+**Backend - 3D Product Viewer Deployment (Task) — label: `WBS`**
 ```
 _BA to add information when defining DPL components post asset collection._
 ```
 
-**Frontend - Complete all S4 Configurations and Styling (Task) — no label**
+**Frontend - Complete all S4 Configurations and Styling (Task) — label: `WBS`**
 ```
 Complete all S4 configurations and styling in alignment with the app configuration page: [Client Name - App Configuration|{Confluence App Config URL}]
 ```
 
-**Projects - Configure S4 App in Configuration Portal (Task) — no label**
+**Projects - Configure S4 App in Configuration Portal (Task) — label: `WBS`**
 ```
 Configure S4 App in Configuration Portal
 ```
 
-**Backend - Configure New Build S4 App (Task) — no label**
+**Backend - Configure New Build S4 App (Task) — label: `WBS`**
 ```
 Configure a new build S4 visualizer in alignment with the app configuration page [Client Name - App Configuration|{Confluence App Config URL}]
 
